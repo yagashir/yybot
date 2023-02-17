@@ -6,12 +6,15 @@ import pandas as pd
 import numpy as np
 import json
 
+import orders
+
 class SubActions:
     def __init__(self):
         self.leverage = 3
         self.volatility_term = 30
         self.stop_range = 2
         self.trade_risk = 0.03
+        self.bitflyer = orders.Order()
 
 
     # CryptowatchのAPIを使用する関数
@@ -70,6 +73,9 @@ class SubActions:
         lot = 0
         #口座残高を取得する（バックテスト用）
         balance = flag["records"]["funds"]
+
+        #口座残高を取得する（フォワードテスト用）
+        # balance = self.bitflyer.get_bitflyer_collateral()
 
         #1期間のボラティリティを基準にストップ位置を計算する
         volatility = self.calculate_volatility(last_data)

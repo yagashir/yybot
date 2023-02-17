@@ -55,8 +55,8 @@ backtest.start_funds = start_funds
 
 
 #価格チャートを取得
-# price = get_price(chart_sec)
-price = sub_action.get_price_from_file("../latest_data/1514764800-1670371200-price_1d.json")
+price = sub_action.get_price(chart_sec)
+# price = sub_action.get_price_from_file("../latest_data/1514764800-1670371200-price_1d.json")
 
 
 flag = {
