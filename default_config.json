@@ -1,0 +1,26 @@
+{
+    "product_code" : "FX_BTC_JPY",
+    "key" : "bitflyer_API_key",
+    "secret" : "bitflyer_API_secret",
+    "chart_sec" : 86400,
+    "get_time_before" : 0,
+    "get_time_after" : 0,
+    "request_url" : "",
+    "csv_path" : "",
+    "buy_term" : 30,
+    "sell_term" : 30,
+    "judge_price" : {
+        "BUY" : "high_price",
+        "SELL" : "low_price"
+    },
+    "volatility_term" : 30,
+    "stop_range" : 2,
+    "trade_risk" : 0.02,
+    "leverage" : 3,
+    "start_funds" : 300000,
+    "wait" : 0,
+    "slippage" : 0.001,
+    "entry_times": 4,
+    "entry_range": 0.5
+}
+

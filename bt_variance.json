@@ -1,0 +1,33 @@
+{
+    "order": {
+        "exist": false,
+        "side": "",
+        "price": 0,
+        "stop": 0,
+        "ATR": 0,
+        "lot": 0,
+        "count": 0
+    },
+    "position": {
+        "exist": ,
+        "side": "",
+        "price": 0,
+        "stop": 0,
+        "ATR": 0,
+        "lot": 0,
+        "count": 0
+    },
+    "records": {
+        "date": [],
+        "profit": [],
+        "return": [],
+        "side": [],
+        "stop-count": [],
+        "holding-periods": [],
+        "drawdown": 0,
+        "slippage": [],
+        "log": [],
+        "funds": 300000
+    }
+}
+
