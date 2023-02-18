@@ -20,28 +20,15 @@ config = json.load(config)
 config["need_term"] = max(config["buy_term"], config["sell_term"], config["volatility_term"])
 
 
-action = actions.Action()
-sub_action = sub_actions.SubAction()
-strategy = strategies.Strategy()
-backtest = backtest_output.Backtest()
-
-
-action.need_term = config["need_term"]
-action.chart_sec = config["chart_sec"]
-sub_action.leverage = config["leverage"]
-sub_action.volatility_term = config["volatility_term"]
-sub_action.stop_range = config["stop_range"]
-sub_action.trade_risk = config["trade_risk"]
-strategy.buy_term = config["buy_term"]
-strategy.sell_term = config["sell_term"]
-strategy.judge_price = config["judge_price"]
-backtest.slippage = config["slippage"]
-backtest.start_funds = config["start_funds"]
+action = actions.Action(config)
+sub_action = sub_actions.SubAction(config)
+strategy = strategies.Strategy(config)
+backtest = backtest_output.Backtest(config)
 
 
 #価格チャートを取得
-price = sub_action.get_price(config["chart_sec"])
-# price = sub_action.get_price_from_file("../latest_data/1514764800-1670371200-price_1d.json")
+# price = sub_action.get_price(config["chart_sec"])
+price = sub_action.get_price_from_file(config["chart_path"])
 
 flag = open("bt_variance.json", "r", encoding="utf-8")
 flag = json.load(flag)
@@ -67,6 +54,7 @@ while i < len(price):
     elif flag["position"]["exist"]:
         flag = action.stop_position(data, last_data, flag)
         flag = action.close_position(data, last_data, flag)
+        flag = action.add_position(data, last_data, flag)
     else:
         flag = action.entry_signal(data, last_data, flag)
 

@@ -17,6 +17,14 @@
         "lot": 0,
         "count": 0
     },
+    "add-position":{
+        "count": 0,
+        "first-entry-price": 0,
+        "last-entry-price": 0,
+        "unit-range": 0,
+        "unit-size":0,
+        "stop": 0
+    },
     "records": {
         "date": [],
         "profit": [],

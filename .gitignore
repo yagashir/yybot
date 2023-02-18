@@ -1,9 +1,9 @@
-# API を含むため無視
 config.json
 
-# ストラテジーは公開しない
 strategies.py
 
 # キャッシュは記録とる必要ないので無視
 /__pycache__/
 
+#ログ
+/log

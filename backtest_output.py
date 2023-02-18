@@ -7,10 +7,11 @@ import numpy as np
 import json
 
 class Backtest:
-    def __init__(self):
-        self.slippage = 0.01
-        self.start_funds = 300000
-        
+    def __init__(self, config):
+        self.slippage = config["slippage"]
+        self.start_funds = config["start_funds"]
+        self.output_path = config["output_path"]
+
 
     #各トレードのパフォーマンスを記録する関数
     def records(self, flag, data, close_price, close_type=None):
@@ -177,7 +178,7 @@ class Backtest:
             print("月間ドローダウン： {}円".format(-1 * row["Drawdown"].astype(int)))
             print("月末資金　　　　： {}円".format(row["Funds"].astype(int)))
 
-        file = open("../{0}-donchian-log2.txt".format(datetime.now().strftime("%Y-%m-%d-%H-%M")), "wt", encoding="utf-8")
+        file = open(self.output_path + "{0}-donchian-log.txt".format(datetime.now().strftime("%Y-%m-%d-%H-%M")), "wt", encoding="utf-8")
         file.writelines(flag["records"]["log"])
 
 

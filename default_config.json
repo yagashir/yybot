@@ -6,7 +6,8 @@
     "get_time_before" : 0,
     "get_time_after" : 0,
     "request_url" : "",
-    "csv_path" : "",
+    "data_path" : "",
+    "output_path": "",
     "buy_term" : 30,
     "sell_term" : 30,
     "judge_price" : {
