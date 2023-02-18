@@ -91,6 +91,7 @@ class SubAction:
             flag["add-position"]["unit-size"] = np.floor(calc_lot / self.entry_times * 100) / 100
             flag["add-position"]["unit-range"] = round(volatility * self.entry_range)
             flag["add-position"]["stop"] = stop
+            flag["position"]["ATR"] = round(volatility)
 
             flag["records"]["log"].append("\n現在のアカウント残高は{}円です\n".format(balance))
             flag["records"]["log"].append("許容リスクから購入できる枚数は最大{}BTCまでです\n".format(calc_lot))

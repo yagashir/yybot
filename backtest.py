@@ -19,7 +19,13 @@ config = open("config.json", "r", encoding="utf-8")
 config = json.load(config)
 config["need_term"] = max(config["buy_term"], config["sell_term"], config["volatility_term"])
 
+#トレイリングストップの比率に 0~1 のスコープ外の数値を設定できないようにする
+if config["trail_ratio"] > 1:
+    config["trail_ratio"] = 1
+elif config["trail_ratio"] < 0:
+    config["trail_ratio"] = 0
 
+#インスタンス生成
 action = actions.Action(config)
 sub_action = sub_actions.SubAction(config)
 strategy = strategies.Strategy(config)
@@ -30,6 +36,8 @@ backtest = backtest_output.Backtest(config)
 # price = sub_action.get_price(config["chart_sec"])
 price = sub_action.get_price_from_file(config["chart_path"])
 
+
+#バックテスト用の変数を用意
 flag = open("bt_variance.json", "r", encoding="utf-8")
 flag = json.load(flag)
 flag["funds"] = config["start_funds"]
@@ -51,10 +59,12 @@ while i < len(price):
 
     if flag["order"]["exist"]:
         flag = action.check_order(flag)
+
     elif flag["position"]["exist"]:
         flag = action.stop_position(data, last_data, flag)
         flag = action.close_position(data, last_data, flag)
         flag = action.add_position(data, last_data, flag)
+
     else:
         flag = action.entry_signal(data, last_data, flag)
 

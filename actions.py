@@ -16,8 +16,11 @@ class Action:
         self.need_term = config["need_term"]
         self.chart_sec = config["chart_sec"]
         self.slippage = config["slippage"]
+        self.stop_range = config["stop_range"]
         self.entry_times = config["entry_times"]
         self.entry_range = config["entry_range"]
+        self.trail_ratio = config["trail_ratio"]
+        self.trail_until_breakeven = config["trail_until_breakeven"]
 
         self.strategy = strategies.Strategy(config)
         self.sub_action = sub_actions.SubAction(config)
@@ -156,6 +159,9 @@ class Action:
     #損切関数
     def stop_position(self, data, last_data, flag):
 
+        #トレイリングストップを実行
+        flag = self.trail_stop(data, flag)
+
         if flag["position"]["side"] == "BUY":
             stop_price = flag["position"]["price"] - flag["position"]["stop"]
             if data["low_price"] < stop_price:
@@ -266,4 +272,45 @@ class Action:
                 flag["add-position"]["last-entry-price"] = entry_price
 
         return flag
+
+    def trail_stop(self, data, flag):
+
+        #ポジションの追加取得（増し玉）が終わるまでは何もしない
+        if flag["add-position"]["count"] < self.entry_times:
+            return flag
+
+        last_stop = flag["position"]["stop"] #前回のストップ幅
+        first_stop = flag["position"]["ATR"] * self.stop_range #最初のストップ幅
+
+        #終値がエントリー価格からいくら離れたか計算する
+        if flag["position"]["side"] == "BUY" and data["close_price"] > flag["position"]["price"]:
+            moved_range = round(data["close_price"] - flag["position"]["price"])
+        elif flag["position"]["side"] == "SELL" and data["close_price"] < flag["position"]["price"]:
+            moved_range = round(flag["position"]["price"] - data["close_price"])
+        else:
+            moved_range = 0
+
+
+        #動いたレンジ幅に合わせてストップ位置を更新する
+        if moved_range > flag["position"]["ATR"]:
+            number = (int(np.floor(moved_range / flag["position"]["ATR"])))
+            flag["position"]["stop"] = round(first_stop - (number * flag["position"]["ATR"] * self.trail_ratio))
+
+        #損益ゼロラインまでしかトレイルしない場合
+        if self.trail_until_breakeven and flag["position"]["stop"] < 0:
+            flag["position"]["stop"] = 0
+
+        #ストップがエントリー方向と逆に動いたら更新しない
+        if flag["position"]["stop"] > last_stop:
+            flag["position"]["stop"] = last_stop
+
+        #ストップが動いた場合のみログ出力
+        if flag["position"]["stop"] != last_stop:
+            if flag["position"]["side"] =="BUY":
+                flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かします".format(round(flag["position"]["price"] - flag["position"]["stop"])))
+            else:
+                flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かします".format(round(flag["position"]["price"] + flag["position"]["stop"])))
+
+        return flag
+
 
