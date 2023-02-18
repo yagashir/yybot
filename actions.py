@@ -7,16 +7,18 @@ import numpy as np
 import json
 
 import strategies
+import orders
 import sub_actions
 import backtest_output
 
-class Actions:
+class Action:
     def __init__(self):
-        self.strategy = strategies.Strategies()
-        self.sub_action = sub_actions.SubActions()
+        self.strategy = strategies.Strategy()
+        self.sub_action = sub_actions.SubAction()
         self.backtest = backtest_output.Backtest()
         self.need_term = 0
         self.chart_sec = 3600
+        self.order = orders.Order
         pass
 
     def entry_signal(self, data, last_data, flag):

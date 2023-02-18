@@ -1,7 +1,7 @@
 import ccxt
 import time
 
-class Orders:
+class Order:
     def __init__(self):
         self.bitflyer = ccxt.bitflyer()
         pass

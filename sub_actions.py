@@ -8,7 +8,7 @@ import json
 
 import orders
 
-class SubActions:
+class SubAction:
     def __init__(self):
         self.leverage = 3
         self.volatility_term = 30

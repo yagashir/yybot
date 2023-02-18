@@ -1,4 +1,4 @@
-class Strategies:
+class Strategy:
     def __init__(self):
         self.buy_term = 30
         self.sell_term = 30

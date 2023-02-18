@@ -9,7 +9,7 @@
         "count": 0
     },
     "position": {
-        "exist": ,
+        "exist": false,
         "side": "",
         "price": 0,
         "stop": 0,
