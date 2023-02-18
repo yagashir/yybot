@@ -1,7 +1,8 @@
 import ccxt
+import time
 
 class Orders:
-    def self __init__(self):
+    def __init__(self):
         self.bitflyer = ccxt.bitflyer()
         pass
 
@@ -17,4 +18,3 @@ class Orders:
                 print("20秒待機してやり直します")
                 time.sleep(20)
 
-    
