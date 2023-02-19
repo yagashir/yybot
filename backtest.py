@@ -14,9 +14,11 @@ import orders
 
 #--------設定項目--------
 
-# 設定ファイルの読み込み
+#設定ファイルの読み込み
 config = open("config.json", "r", encoding="utf-8")
 config = json.load(config)
+
+#設定ファイルの更新
 config["need_term"] = max(config["buy_term"], config["sell_term"], config["volatility_term"])
 
 #トレイリングストップの比率に 0~1 のスコープ外の数値を設定できないようにする
@@ -40,7 +42,10 @@ price = sub_action.get_price_from_file(config["chart_path"])
 #バックテスト用の変数を用意
 flag = open("bt_variance.json", "r", encoding="utf-8")
 flag = json.load(flag)
+
+#バックテスト用変数の更新
 flag["funds"] = config["start_funds"]
+flag["stop-AF"] = config["stop_AF"]
 
 
 last_data = []

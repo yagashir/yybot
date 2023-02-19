@@ -21,6 +21,9 @@ class Action:
         self.entry_range = config["entry_range"]
         self.trail_ratio = config["trail_ratio"]
         self.trail_until_breakeven = config["trail_until_breakeven"]
+        self.stop_AF = config["stop_AF"]
+        self.stop_AF_add = config["stop_AF_add"]
+        self.stop_AF_max = config["stop_AF_max"]
 
         self.strategy = strategies.Strategy(config)
         self.sub_action = sub_actions.SubAction(config)
@@ -109,6 +112,8 @@ class Action:
                 self.backtest.records(flag, data, data["close_price"])
                 flag["position"]["exist"] = False
                 flag["position"]["count"] = 0
+                flag["position"]["stop-AF"] = self.stop_AF
+                flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
 
                 lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
@@ -137,6 +142,8 @@ class Action:
                 self.backtest.records(flag, data, data["close_price"])
                 flag["position"]["exist"] = False
                 flag["position"]["count"] = 0
+                flag["position"]["stop-AF"] = self.stop_AF
+                flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
 
                 lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
@@ -174,6 +181,8 @@ class Action:
                 self.backtest.records(flag, data, stop_price, "STOP")
                 flag["position"]["exist"] = False
                 flag["position"]["count"] = 0
+                flag["position"]["stop-AF"] = self.stop_AF
+                flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
 
         if flag["position"]["side"] == "SELL":
@@ -188,6 +197,8 @@ class Action:
                 self.backtest.records(flag, data, stop_price, "STOP")
                 flag["position"]["exist"] = False
                 flag["position"]["count"] = 0
+                flag["position"]["stop-AF"] = self.stop_AF
+                flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
 
         return flag
@@ -279,9 +290,6 @@ class Action:
         if flag["add-position"]["count"] < self.entry_times:
             return flag
 
-        last_stop = flag["position"]["stop"] #前回のストップ幅
-        first_stop = flag["position"]["ATR"] * self.stop_range #最初のストップ幅
-
         #終値がエントリー価格からいくら離れたか計算する
         if flag["position"]["side"] == "BUY" and data["close_price"] > flag["position"]["price"]:
             moved_range = round(data["close_price"] - flag["position"]["price"])
@@ -290,26 +298,27 @@ class Action:
         else:
             moved_range = 0
 
+        #最高値・最安値を更新したか調べる
+        #stop-EP : 直近のエントリー価格と最高値（もしくは最安値）との差額
+        if moved_range < 0 or flag["position"]["stop-EP"] >= moved_range:
+            return flag
+        else:
+            flag["position"]["stop-EP"] = moved_range
 
-        #動いたレンジ幅に合わせてストップ位置を更新する
-        if moved_range > flag["position"]["ATR"]:
-            number = (int(np.floor(moved_range / flag["position"]["ATR"])))
-            flag["position"]["stop"] = round(first_stop - (number * flag["position"]["ATR"] * self.trail_ratio))
+        #加速係数に応じて損切りラインを動かす
+        flag["position"]["stop"] = round(flag["position"]["stop"] - (moved_range + flag["position"]["stop"]) * flag["position"]["stop-AF"])
 
-        #損益ゼロラインまでしかトレイルしない場合
-        if self.trail_until_breakeven and flag["position"]["stop"] < 0:
-            flag["position"]["stop"] = 0
+        #加速係数の絶対値を増やす
+        flag["position"]["stop-AF"] = round(flag["position"]["stop-AF"] + self.stop_AF_add, 2)
+        if flag["position"]["stop-AF"] >= self.stop_AF_max:
+            flag["position"]["stop-AF"] = self.stop_AF_max
 
-        #ストップがエントリー方向と逆に動いたら更新しない
-        if flag["position"]["stop"] > last_stop:
-            flag["position"]["stop"] = last_stop
 
         #ストップが動いた場合のみログ出力
-        if flag["position"]["stop"] != last_stop:
-            if flag["position"]["side"] =="BUY":
-                flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かします".format(round(flag["position"]["price"] - flag["position"]["stop"])))
-            else:
-                flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かします".format(round(flag["position"]["price"] + flag["position"]["stop"])))
+        if flag["position"]["side"] =="BUY":
+            flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かして、加速係数を {} に更新します\n".format(round(flag["position"]["price"] - flag["position"]["stop"]), flag["position"]["stop-AF"]))
+        else:
+            flag["records"]["log"].append("トレイリングストップの発動：ストップ位置を {} 円に動かして、加速係数を {} に更新します\n".format(round(flag["position"]["price"] + flag["position"]["stop"]), flag["position"]["stop-AF"]))
 
         return flag
 

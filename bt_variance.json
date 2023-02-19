@@ -15,7 +15,9 @@
         "stop": 0,
         "ATR": 0,
         "lot": 0,
-        "count": 0
+        "count": 0,
+        "stop-AF": 0.02,
+        "stop-EP": 0
     },
     "add-position":{
         "count": 0,
