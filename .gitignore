@@ -7,3 +7,6 @@ strategies.py
 
 #ログ
 /log
+
+#test通信のプログラムディレクトリ
+/bitflyer_test
