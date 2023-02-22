@@ -40,7 +40,7 @@ price = sub_action.get_price_from_file(config["chart_path"])
 
 
 #バックテスト用の変数を用意
-flag = open("bt_variance.json", "r", encoding="utf-8")
+flag = open("backtest_variance.json", "r", encoding="utf-8")
 flag = json.load(flag)
 
 #バックテスト用変数の更新
