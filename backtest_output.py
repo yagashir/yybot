@@ -70,7 +70,7 @@ class Backtest:
 
 
     #バックテストの集計用の関数
-    def backtesting(self, flag):
+    def backtesting(self, last_data, flag):
 
         #成績を記録した pandas DataFrame を作成
         records = pd.DataFrame({
@@ -93,6 +93,10 @@ class Backtest:
                 #連敗の記録
                 consecutive_defeats.append(defeats)
                 defeats = 0
+
+        #テスト日数を集計 → CAGRで使用
+        time_period = datetime.fromtimestamp(last_data[-1]["close_time"]) - datetime.fromtimestamp(last_data[0]["close_time"])
+        time_period = int(time_period.days)
 
         #総損益の列を追加する
         records["Gross"] = records["Profit"].cumsum()
@@ -149,6 +153,9 @@ class Backtest:
         print("全トレード数　　　： {}回".format(len(records)))
         print("勝率　　　　　　　： {}％".format(round(len(records[records["Profit"] > 0]) / len(records) * 100, 1)))
         print("平均リターン　　　： {}％".format(round(records["Rate"].mean(), 2)))
+        print("標準偏差　　　　　： {}％".format(round(records["Rate"].std(), 2)))
+        print("平均利益率　　　　： {}％".format(round(records[records["Profit"] > 0]["Rate"].mean(), 2)))
+        print("平均損失率　　　　： {}％".format(round(records[records["Profit"] < 0]["Rate"].mean(), 2)))
         print("平均保有期間　　　： {}足分".format(round(records["Periods"].mean(), 1)))
         print("損切の回数　　　　： {}回".format(records["STOP"].sum()))
         print("")
@@ -166,6 +173,15 @@ class Backtest:
         print("手数料合計　　　　： {}円".format(-1 * records["Slippage"].sum()))
 
         print("------------------------------")
+        print("各成績指標")
+        print("------------------------------")
+        print("CAGR（年間成績率）　　： {}％".format(round((records["Funds"].iloc[-1] / self.start_funds) ** (365 / time_period) * 100 - 100, 2)))
+        print("MAR レシオ　　　　　　： {}".format(round((records["Funds"].iloc[-1] / self.start_funds - 1) * 100 / records["DrawdownRate"].max(), 2)))
+        print("シャープレシオ　　　　： {}".format(round(records["Rate"].mean() / records["Rate"].std(), 2)))
+        print("プロフィットファクター： {}".format(round(records[records["Profit"] > 0]["Profit"].sum() / abs(records[records["Profit"] < 0]["Profit"].sum()), 2)))
+        print("損益レシオ　　　　　　： {}".format(round(records[records["Profit"] > 0]["Rate"].mean() / abs(records[records["Profit"] < 0]["Rate"].mean()), 2)))
+
+        print("------------------------------")
         print("月別の成績")
 
         for index, row in month_records.iterrows():
@@ -178,16 +194,40 @@ class Backtest:
             print("月間ドローダウン： {}円".format(-1 * row["Drawdown"].astype(int)))
             print("月末資金　　　　： {}円".format(row["Funds"].astype(int)))
 
+
+        #際立った損益を表示
+        n = 10
+        print("------------------------------")
+        print(" + {}％を超えるトレードの回数　： {}回".format(n, len(records[records["Rate"] > n])))
+        print("------------------------------")
+        for index, row in records[records["Rate"] > n].iterrows():
+            print("{0}   |   {1}％   |   {2}".format(row["Date"], round(row["Rate"], 2), row["Side"]))
+
+        print(" - {}％を下回るトレードの回数　： {}回".format(n, len(records[records["Rate"] < n * (-1)])))
+        for index, row in records[records["Rate"] < n * (-1)].iterrows():
+            print("{0}   |   {1}％   |   {2}".format(row["Date"], round(row["Rate"], 2), row["Side"]))
+
+
+        #ログファイルの出力
         file = open(self.output_path + "{0}-donchian-log.txt".format(datetime.now().strftime("%Y-%m-%d-%H-%M")), "wt", encoding="utf-8")
         file.writelines(flag["records"]["log"])
 
 
         #損益曲線をプロット
+        plt.figure(figsize=(10, 4))
+        plt.subplot(1, 2, 1)
         plt.plot(records["Date"], records["Funds"])
         plt.xlabel("Date")
         plt.ylabel("Balance")
         plt.xticks(rotation=50) # X軸の目盛りを 50 度回転
 
+
+        #リターン分布の相対度数表を作る
+        plt.subplot(1, 2, 2)
+        plt.hist(records["Rate"], 50, rwidth=0.9)
+        plt.axvline(x=0, linestyle="dashed", label="Return = 0")
+        plt.axvline(records["Rate"].mean(), color="orange", label="Average Return")
+        plt.legend()
+
         plt.show()
 
-        return

@@ -9,6 +9,7 @@ import json
 import actions
 import sub_actions
 import strategies
+import indicator
 import backtest_output
 import orders
 
@@ -31,6 +32,7 @@ elif config["trail_ratio"] < 0:
 action = actions.Action(config)
 sub_action = sub_actions.SubAction(config)
 strategy = strategies.Strategy(config)
+indicator = indicator.Indicator()
 backtest = backtest_output.Backtest(config)
 
 
@@ -84,4 +86,4 @@ print("終了時点：" + str(price[-1]["close_time_dt"]))
 print(str(len(price)) + "件のローソク足データで検証")
 print("--------------------------")
 
-backtest.backtesting(flag)
+backtest.backtesting(last_data, flag)

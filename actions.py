@@ -14,13 +14,22 @@ import backtest_output
 class Action:
     def __init__(self, config):
         self.need_term = config["need_term"]
+
         self.chart_sec = config["chart_sec"]
+
+        self.TEST_MODE_LOT = config["TEST_MODE_LOT"]
+
         self.slippage = config["slippage"]
+
         self.stop_range = config["stop_range"]
+
         self.entry_times = config["entry_times"]
         self.entry_range = config["entry_range"]
+
         self.trail_ratio = config["trail_ratio"]
         self.trail_until_breakeven = config["trail_until_breakeven"]
+
+        self.stop_config = config["stop_config"]
         self.stop_AF = config["stop_AF"]
         self.stop_AF_add = config["stop_AF_add"]
         self.stop_AF_max = config["stop_AF_max"]
@@ -166,8 +175,9 @@ class Action:
     #損切関数
     def stop_position(self, data, last_data, flag):
 
-        #トレイリングストップを実行
-        flag = self.trail_stop(data, flag)
+        #stop_config が TRAILING ならトレイリングストップを実行
+        if self.stop_config == "TRAILING":
+            flag = self.trail_stop(data, flag)
 
         if flag["position"]["side"] == "BUY":
             stop_price = flag["position"]["price"] - flag["position"]["stop"]
@@ -208,6 +218,10 @@ class Action:
 
         #ポジションがない場合は何もしない
         if flag["position"]["exist"] == False:
+            return flag
+
+        #固定ロット(1BTC)でのテスト時は何もしない
+        if self.TEST_MODE_LOT == "fixed":
             return flag
 
         #最初（1回目）のエントリー価格を記録
@@ -287,7 +301,7 @@ class Action:
     def trail_stop(self, data, flag):
 
         #ポジションの追加取得（増し玉）が終わるまでは何もしない
-        if flag["add-position"]["count"] < self.entry_times:
+        if flag["add-position"]["count"] < self.entry_times and self.TEST_MODE_LOT != "fixed":
             return flag
 
         #終値がエントリー価格からいくら離れたか計算する
