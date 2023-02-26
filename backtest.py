@@ -37,7 +37,7 @@ backtest = backtest_output.Backtest(config)
 
 
 #価格チャートを取得
-# price = sub_action.get_price(config["chart_sec"])
+# price = sub_action.get_price(config["chart_sec"], after=1645889415)
 price = sub_action.get_price_from_file(config["chart_path"])
 
 

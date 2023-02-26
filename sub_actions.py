@@ -76,13 +76,13 @@ class SubAction:
 
         #固定ロットでのテスト時
         if self.TEST_MODE_LOT == "fixed":
-            flag["records"]["log"].append("固定ロット(1枚)でテスト中のため、1BTC を注文します\n")
-            lot = 1
+            flag["records"]["log"].append("固定ロット(0.02枚)でテスト中のため、0.02BTC を注文します\n")
+            lot = 0.02
             volatility = self.calculate_volatility(last_data)
             stop = self.stop_range * volatility
             flag["position"]["ATR"] = round(volatility)
             return lot, stop, flag
-        
+
 
         #口座残高を取得する（バックテスト用）
         balance = flag["records"]["funds"]
