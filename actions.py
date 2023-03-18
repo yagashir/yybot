@@ -48,9 +48,9 @@ class Action:
         if signal["side"] == "BUY":
             flag["records"]["log"].append("過去{0}足の最高値{1}円を、直近の高値が{2}円でブレイクしました\n".format(self.need_term,signal["price"],data["high_price"]))
 
-            if self.strategy.filter_donchian(data, last_data, signal) == False:
-                flag["records"]["log"].append("フィルターのエントリー条件を満たさなかったためエントリーしません\n")
-                return flag
+            # if self.strategy.volume_filter(data, last_data, signal) == False:
+            #     flag["records"]["log"].append("フィルターのエントリー条件を満たさなかったためエントリーしません\n")
+            #     return flag
 
             flag["records"]["log"].append(str(data["close_price"]) + "円で買いの指値注文を出します\n")
 

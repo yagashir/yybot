@@ -36,12 +36,13 @@ class SubAction:
         if data["result"][str(min)] is not None:
             for i in data["result"][str(min)]:
                 if i[1] != 0 and i[2] != 0 and i[3] != 0 and i[4] != 0:
-                    price.append({ "close_time" : i[0],
+                    price.append({"close_time" : i[0],
                         "close_time_dt" : datetime.fromtimestamp(i[0]).strftime('%Y/%m/%d %H:%M'),
                         "open_price" : i[1],
                         "high_price" : i[2],
                         "low_price" : i[3],
-                        "close_price": i[4] })
+                        "close_price": i[4],
+                        "volume": i[5]})
             return price
 
         else:
