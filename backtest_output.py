@@ -16,6 +16,9 @@ class Backtest:
     #各トレードのパフォーマンスを記録する関数
     def records(self, flag, data, close_price, close_type=None):
 
+        #フィルター発動
+        flag["records"]["volume"].append(flag["records"]["filter-match"])
+
         #取引手数料の計算
         entry_price = int(round(flag["position"]["price"] * flag["position"]["lot"]))
         exit_price = int(round(close_price * flag["position"]["lot"]))
@@ -80,7 +83,8 @@ class Backtest:
             "Rate": flag["records"]["return"],
             "STOP": flag["records"]["stop-count"],
             "Periods": flag["records"]["holding-periods"],
-            "Slippage": flag["records"]["slippage"]
+            "Slippage": flag["records"]["slippage"],
+            "Volume": flag["records"]["volume"]
         })
 
         #連敗回数をカウントする
@@ -227,6 +231,97 @@ class Backtest:
         plt.hist(records["Rate"], 50, rwidth=0.9)
         plt.axvline(x=0, linestyle="dashed", label="Return = 0")
         plt.axvline(records["Rate"].mean(), color="orange", label="Average Return")
+        plt.legend()
+
+        plt.show()
+
+        #バックテストの集計用の関数
+    def backtesting_ver2(self, last_data, flag):
+
+        #成績を記録した pandas DataFrame を作成
+        print("Date : ", len(flag["records"]["date"]))
+        print("Profit : ", len(flag["records"]["profit"]))
+        print("Volume : ", len(flag["records"]["volume"]))
+
+        records = pd.DataFrame({
+            "Date": pd.to_datetime(flag["records"]["date"]),
+            "Profit": flag["records"]["profit"],
+            "Side": flag["records"]["side"],
+            "Rate": flag["records"]["return"],
+            "STOP": flag["records"]["stop-count"],
+            "Periods": flag["records"]["holding-periods"],
+            "Slippage": flag["records"]["slippage"],
+            "Volume": flag["records"]["volume"]
+        })
+
+        #連敗回数をカウントする
+        consecutive_defeats = []
+        defeats = 0
+        for p in flag["records"]["profit"]:
+            if p < 0:
+                defeats += 1
+            else:
+                #連敗の記録
+                consecutive_defeats.append(defeats)
+                defeats = 0
+
+        #総損益の列を追加する
+        records["Gross"] = records["Profit"].cumsum()
+
+        #資産推移の列を追加
+        records["Funds"] = records["Gross"] + self.start_funds
+
+        #最大ドローダウンの列を追加する
+        records["Drawdown"] = records["Funds"].cummax().subtract(records["Funds"])
+        records["DrawdownRate"] = round(records["Drawdown"] / records["Funds"].cummax() * 100, 1)
+
+
+        #出来高フィルターにかかった場面とかかっていなかった場面を集計
+        high_vol_records = records[records["Volume"].isin(["high_volume"])]
+        low_vol_records = records[records["Volume"].isin(["low_volume"])]
+
+        print("バックテストの結果")
+        print("--------------------------")
+        print("出来高が多かったときの成績")
+        print("--------------------------")
+        print("トレード回数　： {}回".format(len(len(high_vol_records))))
+        print("勝率　　　　　： {}％".format(round(len(high_vol_records[high_vol_records["Profit"] > 0]) / len(high_vol_records) * 100, 1)))
+        print("平均リターン　： {}％".format(round(high_vol_records["Rate"].mean(), 2)))
+        print("総利益　　　　： {}円".format(high_vol_records["Profit"].sum()))
+        print("平均保有期間　： {}足分".format(round(high_vol_records["Periods"]).mean(), 1))
+        print("損切の回数　　： {}回".format(high_vol_records["STOP"].sum()))
+
+        print("--------------------------")
+        print("出来高が少なかったときの成績")
+        print("--------------------------")
+        print("トレード回数　： {}回".format(len(low_vol_records)))
+        print("勝率　　　　　： {}％".format(round(len(low_vol_records[low_vol_records["Profit"] > 0]) / len(low_vol_records) * 100, 1)))
+        print("平均リターン　： {}％".format(round(low_vol_records["Rate"].mean(), 2)))
+        print("総利益　　　　： {}円".format(low_vol_records["Profit"].sum()))
+        print("平均保有期間　： {}足分".format(round(low_vol_records["Periods"]).mean(), 1))
+        print("損切の回数　　： {}回".format(round(low_vol_records["STOP"].sum())))
+
+
+        #ログファイルの出力
+        file = open(self.output_path + "{0}-donchian-log.txt".format(datetime.now().strftime("%Y-%m-%d-%H-%M")), "wt", encoding="utf-8")
+        file.writelines(flag["records"]["log"])
+
+
+        #「出来高が多いとき]のリターン分布図
+        plt.subplot(2, 1, 1)
+        plt.hist(high_vol_records["Rate"], 50, rwidth=0.9)
+        plt.xlim(-15, 45)
+        plt.axvline(x=0, linestyle="dashed", label="Return=0")
+        plt.axvline(high_vol_records["Rate"].mean(), color="orange", label="AverageReturn")
+        plt.legend()
+
+        #「出来高が少ないとき」のリターン分布図
+        plt.subplot(2, 1, 2)
+        plt.hist(low_vol_records["Rate"], 50, rwidth=0.9, color="coral")
+        plt.xlim(-15, 45)
+        plt.gca().invert_yaxis()
+        plt.axvline(x=0, linestyle="dashed", label="Return=0")
+        plt.axvline(low_vol_records["Rate"].mean(), color="orange", label="AverageReturn")
         plt.legend()
 
         plt.show()

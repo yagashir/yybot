@@ -86,4 +86,4 @@ print("終了時点：" + str(price[-1]["close_time_dt"]))
 print(str(len(price)) + "件のローソク足データで検証")
 print("--------------------------")
 
-backtest.backtesting(last_data, flag)
+backtest.backtesting_ver2(last_data, flag)

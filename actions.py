@@ -48,11 +48,7 @@ class Action:
         if signal["side"] == "BUY":
             flag["records"]["log"].append("過去{0}足の最高値{1}円を、直近の高値が{2}円でブレイクしました\n".format(self.need_term,signal["price"],data["high_price"]))
 
-            # if self.strategy.volume_filter(data, last_data, signal) == False:
-            #     flag["records"]["log"].append("フィルターのエントリー条件を満たさなかったためエントリーしません\n")
-            #     return flag
-
-            flag["records"]["log"].append(str(data["close_price"]) + "円で買いの指値注文を出します\n")
+            flag = self.strategy.volume_filter(data, last_data, flag)
 
             lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
             if lot > 0.01:
@@ -70,7 +66,8 @@ class Action:
 
         if signal["side"] == "SELL":
             flag["records"]["log"].append("過去{0}足の最安値{1}円を、直近の安値が{2}円でブレイクしました\n".format(self.need_term,signal["price"],data["low_price"]))
-            flag["records"]["log"].append(str(data["close_price"]) + "円で売りの指値注文を出します\n")
+
+            flag = self.strategy.volume_filter(data, last_data, flag)
 
             lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
             if lot > 0.01:
@@ -130,6 +127,8 @@ class Action:
                 flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
 
+                flag = self.strategy.volume_filter(data, last_data, flag)
+
                 lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
                 if lot > 0.01:
 
@@ -159,6 +158,8 @@ class Action:
                 flag["position"]["stop-AF"] = self.stop_AF
                 flag["position"]["stop-EP"] = 0
                 flag["add-position"]["count"] = 0
+
+                flag = self.strategy.volume_filter(data, last_data, flag)
 
                 lot, stop, flag = self.sub_action.calculate_lot(last_data, data, flag)
                 if lot > 0.01:

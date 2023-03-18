@@ -37,7 +37,9 @@
         "drawdown": 0,
         "slippage": [],
         "log": [],
-        "funds": 300000
+        "funds": 300000,
+        "filter-match": "",
+        "volume": []
     }
 }
 
