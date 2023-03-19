@@ -1,10 +1,8 @@
-import requests
-from datetime import datetime
-import time
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
-import json
+
+from datetime import datetime
+from scipy import stats
 
 class Backtest:
     def __init__(self, config):
@@ -17,7 +15,7 @@ class Backtest:
     def records(self, flag, data, close_price, close_type=None):
 
         #フィルター発動
-        flag["records"]["volume"].append(flag["records"]["filter-match"])
+        flag["records"]["filtering-occurred"].append(flag["records"]["filter-match"])
 
         #取引手数料の計算
         entry_price = int(round(flag["position"]["price"] * flag["position"]["lot"]))
@@ -239,10 +237,6 @@ class Backtest:
     def backtesting_ver2(self, last_data, flag):
 
         #成績を記録した pandas DataFrame を作成
-        print("Date : ", len(flag["records"]["date"]))
-        print("Profit : ", len(flag["records"]["profit"]))
-        print("Volume : ", len(flag["records"]["volume"]))
-
         records = pd.DataFrame({
             "Date": pd.to_datetime(flag["records"]["date"]),
             "Profit": flag["records"]["profit"],
@@ -251,7 +245,7 @@ class Backtest:
             "STOP": flag["records"]["stop-count"],
             "Periods": flag["records"]["holding-periods"],
             "Slippage": flag["records"]["slippage"],
-            "Volume": flag["records"]["volume"]
+            "filtering": flag["records"]["filtering-occurred"]
         })
 
         #連敗回数をカウントする
@@ -277,29 +271,29 @@ class Backtest:
 
 
         #出来高フィルターにかかった場面とかかっていなかった場面を集計
-        high_vol_records = records[records["Volume"].isin(["high_volume"])]
-        low_vol_records = records[records["Volume"].isin(["low_volume"])]
+        filtering_records = records[records["filtering"].isin(["occurred"])]
+        non_filtering_records = records[records["filtering"].isin(["not_occurred"])]
 
         print("バックテストの結果")
         print("--------------------------")
-        print("出来高が多かったときの成績")
+        print("フィルターが機能したときの成績")
         print("--------------------------")
-        print("トレード回数　： {}回".format(len(len(high_vol_records))))
-        print("勝率　　　　　： {}％".format(round(len(high_vol_records[high_vol_records["Profit"] > 0]) / len(high_vol_records) * 100, 1)))
-        print("平均リターン　： {}％".format(round(high_vol_records["Rate"].mean(), 2)))
-        print("総利益　　　　： {}円".format(high_vol_records["Profit"].sum()))
-        print("平均保有期間　： {}足分".format(round(high_vol_records["Periods"]).mean(), 1))
-        print("損切の回数　　： {}回".format(high_vol_records["STOP"].sum()))
+        print("トレード回数　： {}回".format(len(filtering_records)))
+        print("勝率　　　　　： {}％".format(round(len(filtering_records[filtering_records["Profit"] > 0]) / (len(filtering_records) + 1e-4) * 100, 1)))
+        print("平均リターン　： {}％".format(round(filtering_records["Rate"].mean(), 2)))
+        print("総利益　　　　： {}円".format(filtering_records["Profit"].sum()))
+        print("平均保有期間　： {}足分".format(round(filtering_records["Periods"]).mean(), 1))
+        print("損切の回数　　： {}回".format(filtering_records["STOP"].sum()))
 
         print("--------------------------")
-        print("出来高が少なかったときの成績")
+        print("フィルターが機能しなかったときの成績")
         print("--------------------------")
-        print("トレード回数　： {}回".format(len(low_vol_records)))
-        print("勝率　　　　　： {}％".format(round(len(low_vol_records[low_vol_records["Profit"] > 0]) / len(low_vol_records) * 100, 1)))
-        print("平均リターン　： {}％".format(round(low_vol_records["Rate"].mean(), 2)))
-        print("総利益　　　　： {}円".format(low_vol_records["Profit"].sum()))
-        print("平均保有期間　： {}足分".format(round(low_vol_records["Periods"]).mean(), 1))
-        print("損切の回数　　： {}回".format(round(low_vol_records["STOP"].sum())))
+        print("トレード回数　： {}回".format(len(non_filtering_records)))
+        print("勝率　　　　　： {}％".format(round(len(non_filtering_records[non_filtering_records["Profit"] > 0]) / (len(non_filtering_records) + 1e-4) * 100, 1)))
+        print("平均リターン　： {}％".format(round(non_filtering_records["Rate"].mean(), 2)))
+        print("総利益　　　　： {}円".format(non_filtering_records["Profit"].sum()))
+        print("平均保有期間　： {}足分".format(round(non_filtering_records["Periods"]).mean(), 1))
+        print("損切の回数　　： {}回".format(round(non_filtering_records["STOP"].sum())))
 
 
         #ログファイルの出力
@@ -309,20 +303,28 @@ class Backtest:
 
         #「出来高が多いとき]のリターン分布図
         plt.subplot(2, 1, 1)
-        plt.hist(high_vol_records["Rate"], 50, rwidth=0.9)
-        plt.xlim(-15, 45)
+        plt.hist(filtering_records["Rate"], 50, rwidth=0.9)
+        plt.xlim(-10, 30)
         plt.axvline(x=0, linestyle="dashed", label="Return=0")
-        plt.axvline(high_vol_records["Rate"].mean(), color="orange", label="AverageReturn")
+        plt.axvline(filtering_records["Rate"].mean(), color="orange", label="AverageReturn")
         plt.legend()
 
         #「出来高が少ないとき」のリターン分布図
         plt.subplot(2, 1, 2)
-        plt.hist(low_vol_records["Rate"], 50, rwidth=0.9, color="coral")
-        plt.xlim(-15, 45)
+        plt.hist(non_filtering_records["Rate"], 50, rwidth=0.9, color="coral")
+        plt.xlim(-10, 30)
         plt.gca().invert_yaxis()
         plt.axvline(x=0, linestyle="dashed", label="Return=0")
-        plt.axvline(low_vol_records["Rate"].mean(), color="orange", label="AverageReturn")
+        plt.axvline(non_filtering_records["Rate"].mean(), color="orange", label="AverageReturn")
         plt.legend()
 
         plt.show()
+
+        sample_a = filtering_records["Rate"].values
+        sample_b = non_filtering_records["Rate"].values
+        print("--------------------------")
+        print("t検定を実行")
+        print("--------------------------")
+        p = stats.ttest_ind(sample_a, sample_b, equal_var=False)
+        print("p値 : {}".format(p[1]))
 

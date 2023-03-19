@@ -39,7 +39,7 @@
         "log": [],
         "funds": 300000,
         "filter-match": "",
-        "volume": []
+        "filtering-occurred": []
     }
 }
 
